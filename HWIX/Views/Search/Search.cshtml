@@ -1,0 +1,240 @@
+﻿@using HWIX.Cache
+@model HWIX.Models.Search.Search
+
+<div class="row-fluid">
+    <div class="span3">
+        <ul id="navbar" class="nav nav-list">
+            <li><a href="#overview"><i class="icon-chevron-right"></i> Overview</a></li>
+            <li><a href="#topProjects"><i class="icon-chevron-right"></i> Top Projects</a></li>
+            <li><a href="#mapping"><i class="icon-chevron-right"></i> Mapping</a></li>
+        </ul>
+    </div>
+    <div class="span6">
+        <section id="overview">
+            <div class="row-fluid">
+                <div class="span6">
+                    <h1 data-bind="text: CurrentValue.extend({format: Format()})"></h1>
+                    <h3 data-bind="css: { 'text-success' : OneMonthDiff() > 0, 'text-error' : OneMonthDiff() < 0 }"><span data-bind="text: OneMonthDiff() > 0 ? '+' : ''"></span><span data-bind="text: OneMonthDiff.extend({format: Format()})"></span> (<span data-bind="text: OneMonthPercent.percent(2).formatted"></span>)</h3>
+                    Effective: <span data-bind="text: EndDate.extend({datetime: 'MMMM yyyy'})"></span>
+                </div>
+                <div class="span6">
+                    <div id="measure" class="btn-group rightButton" data-toggle="buttons-radio">
+                        <button type="button" class="btn btn-primary active" onclick="load();" data-value="@Enum.GetName(typeof(MeasureType), MeasureType.Closing)">Closings</button>
+                        <button type="button" class="btn btn-primary" onclick="load();" data-value="@Enum.GetName(typeof(MeasureType), MeasureType.AveragePrice)">Average Price</button>
+                    </div>
+                    <div id="dimension" class="btn-group rightButton" data-toggle="buttons-radio">
+                        <button type="button" class="btn btn-primary active" onclick="load();" data-value="@Enum.GetName(typeof(DimensionType), DimensionType.Week)">By Week</button>
+                        <button type="button" class="btn btn-primary" onclick="load();" data-value="@Enum.GetName(typeof(DimensionType), DimensionType.Month)">By Month</button>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td>Range</td>
+                                <td><span data-bind="text: OneMonthLow.extend({format: Format()})"></span> - <span data-bind="text: OneMonthHigh.extend({format: Format()})"></span></td>
+                            </tr>
+                        </thead>
+                        <tr>
+                            <td>52 Week</td>
+                            <td><span data-bind="text: OneYearLow.extend({format: Format()})"></span> - <span data-bind="text: OneYearHigh.extend({format: Format()})"></span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+        <div class="chartWrapper">
+            <div id="datachart"></div>
+        </div>
+        <section id="topProjects">
+            <div class="row-fluid">
+                <h2>Top Closing Projects</h2>
+                <div id="topProjectsAccordion" class="accordion" data-bind="template: { name: 'projectTemplate', foreach: TopProjects }"></div>
+            </div>
+        </section>
+        @if (Model.Extent != null) {
+            <section id="mapping">
+                <div id="heatMap"></div>
+            </section>
+        }
+    </div>
+    <div class="span3">
+        <div class="googleResults" data-bind="template: { name: 'googleTemplate', foreach: GoogleResults }"></div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/html" id="googleTemplate">
+        <a data-bind="html: Title, attr: { href: Link }"></a>
+        <div data-bind="if: ThumbnailLink">
+            <img data-bind="attr: { src: ThumbnailLink }" />
+        </div>
+        <div>
+            <span data-bind="html: Description"></span>
+        </div>
+    </script>
+    <script type="text/html" id="projectTemplate">
+        <div class="accordion-group">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#topProjectsAccordion" data-bind="html: ProjectName, attr: { href: '#' + ProjectName.stripHref().formatted() }"></a>
+            </div>
+            <div class="collapse" data-bind="attr: { id: ProjectName.stripHref().formatted() }">
+                <div class="accordion-inner">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <td>Open Date</td>
+                                <td data-bind="html: OpenDate.extend({datetime: 'MM/dd/yyyy'})"></td>
+                                <td>Market</td>
+                                <td data-bind="html: MarketName"></td>
+                                <td>Project Type</td>
+                                <td data-bind="html: ProductTypeLongDesc"></td>
+                            </tr>
+                        </thead>
+                        <tr>
+                            <td>Total Planned</td>
+                            <td data-bind="html: TotalUnitsPlanned"></td>
+                            <td>County</td>
+                            <td data-bind="html: CountyName"></td>
+                            <td>Website</td>
+                            <td><a data-bind="html: WebAddress.shortenUrl().formatted(), attr: { href: WebAddress }" target="_blank"></a></td>
+                        </tr>
+                        <tr>
+                            <td data-bind="html: $parent.EndDate.extend({datetime: 'MMMM yyyy'})() + ' Closings'"></td>
+                            <td data-bind="html: ClosingCount"></td>
+                            <td>Zipcode</td>
+                            <td data-bind="html: Zipcode"></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td data-bind="html: $parent.EndDate.extend({datetime: 'MMMM yyyy'})() + ' Median Price'"></td>
+                            <td data-bind="html: ClosingsMedianPrice"></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </script>
+    <script>
+        function load() {
+            setTimeout(function() {
+                var measure = $('#measure button.active').data('value');
+                var dimension = $('#dimension button.active').data('value');
+                $.get('@Url.Action("SearchJSON", "Search", new {uniqueName = @Model.UniqueName})&measure=' + measure + '&dimension=' + dimension, function(data) {
+                    bind(data);
+                });
+            }, 100);
+        }
+
+        function bind(data) {
+            viewModel = ko.mapping.fromJS(data);
+            ko.applyBindings(viewModel);
+            setTimeout(function() {
+                $('#datachart').kendoStockChart({
+                    dataSource: new kendo.data.DataSource({ data: data.ValueByWeek }),
+                    dateField: 'Time',
+                    series: [{
+                        type: 'column',
+                        field: 'Values',
+                        tooltip: {
+                            visible: true,
+                            template: templateFromFormat(data.Format)
+                        }
+                    }],
+                    valueAxis: {
+                        labels: {
+                            format: labelFromFormat(data.Format)
+                        }
+                    },
+                    navigator: {
+                        series: {
+                            type: 'area',
+                            field: 'Values'
+                        },
+                        select: {
+                            from: subtractYear(getDateFromNETDate(data.EndDate), 1),
+                            to: getDateFromNETDate(data.EndDate)
+                        }
+                    }
+                });
+            }, 100);
+        }
+        
+        function setUpMap(data) {
+            var container = $('#heatMap');
+            if (container) {
+                var maxZoom = 10;
+                var uL = isc.rim.sphericalMercator.projectFromLatLon(new isc.rim.point(data.Extent.Longitude - data.Extent.Radius, data.Extent.Latitude - data.Extent.Radius));
+                var lR = isc.rim.sphericalMercator.projectFromLatLon(new isc.rim.point(data.Extent.Longitude + data.Extent.Radius, data.Extent.Latitude + data.Extent.Radius));
+                var extent = new isc.rim.envelope.createFromPoints(uL, lR);
+                var center = extent.getCenter();
+                container.rimMap({ mapCenterOnCreate: { x: center.getX(), y: center.getY() }, zoomLevelOnCreate: 10 });
+                var zoom = container.rimMap('getBestFitZoomLevelByExtents', extent);
+                zoom = zoom < maxZoom ? zoom : maxZoom;
+                container.rimMap('setZoomLevel', zoom);
+                
+                var reqBing = new isc.rim.tile.requestorBing();
+                reqBing.setBingKey('@Config.BingMapsKey');
+                var tlBase = new isc.rim.tile.layer('baseLayer', true, 3);
+                tlBase.setDescriptor('r');
+                tlBase.setRequestor(reqBing);
+                container.rimMap('pushTileLayer', tlBase);
+
+                var mdnEndpoint = '@Config.MDNEndPoint';
+                var mapID = 'HWIX';
+                var layerID = 'Closings';
+                var mdnDescriptor = new isc.rim.tile.descriptorMDNRestFeature(mapID, layerID);
+                mdnDescriptor.setBleedRatio(1.33);
+                mdnDescriptor.setClipToRenderBounds(false);
+                mdnDescriptor.setSimplifyEnabled(false);
+                var rendererDm = new isc.rim.tile.rendererDensityMap();
+                
+                var mdnRequestor = new isc.rim.tile.requestorMDNRest(mdnEndpoint);
+                mdnRequestor.setTimeoutMs(30000);
+
+                var mdnTileLayer = new isc.rim.tile.layer("closingsLayer", false, 3);
+                mdnTileLayer.setRequestor(mdnRequestor);
+                mdnTileLayer.setDescriptor(mdnDescriptor);
+                mdnTileLayer.setRenderer(rendererDm);
+                mdnTileLayer.setMinZoomLevel(maxZoom);
+                mdnTileLayer.setTileBleedPix(0);
+                
+                container.rimMap('pushTileLayer', mdnTileLayer);
+
+                var notifyRecomputeDensityMap = function () {
+                    rendererDm.notifyRecompute();
+                };
+                container.rimMap('setExtentChangeCompleteAction', notifyRecomputeDensityMap);
+                container.rimMap('setContentExtentsMarginInPixels', 32);
+
+                mdnTileLayer.setNotifyErrorAction(function (errMsg) {
+                    alert(errMsg);
+                });
+                tlBase.setNotifyErrorAction(function(errMsg) {
+                    alert(errMsg);
+                });
+
+            }
+        }
+
+        $(document).ready(function() {
+            //! REMOVE BEFORE PRODUCTION AS MDN SERVER ON SAME DOMAIN
+            jQuery.support.cors = true;
+            
+            var data = @Html.Raw(Json.Encode(Model));
+            bind(data);
+            setUpMap(data);
+        });
+
+        $(window).resize(function() {
+            var chart = $("#datachart").data("kendoStockChart");
+            if (chart) {
+                chart.redraw();
+            }
+        });
+
+    </script>
+}

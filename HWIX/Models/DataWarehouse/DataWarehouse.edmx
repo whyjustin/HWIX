@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="DataWarehouse.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2008" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityContainer Name="DataWarehouseStoreContainer" />
+        <Function Name="GetCountyExtents" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="Gui">
+          <Parameter Name="query" Type="varchar" Mode="In" />
+        </Function>
+        <Function Name="GetTopProjects" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="Gui">
+          <Parameter Name="query" Type="varchar" Mode="In" />
+          <Parameter Name="date" Type="datetime" Mode="In" />
+        </Function>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="DataWarehouse" Alias="Self" p1:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:p1="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="DataWarehouseEntities" p1:LazyLoadingEnabled="true" >
+          <FunctionImport Name="GetTopProjects" ReturnType="Collection(DataWarehouse.TopProject)">
+            <Parameter Name="query" Mode="In" Type="String" />
+            <Parameter Name="date" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="GetCountyExtents" ReturnType="Collection(DataWarehouse.CountyExtent)">
+            <Parameter Name="query" Mode="In" Type="String" />
+          </FunctionImport>
+        </EntityContainer>
+        <ComplexType Name="TopProject">
+          <Property Type="String" Name="MarketName" Nullable="true" MaxLength="127" />
+          <Property Type="String" Name="CountyName" Nullable="false" MaxLength="60" />
+          <Property Type="String" Name="Zipcode" Nullable="false" MaxLength="5" />
+          <Property Type="String" Name="ProjectName" Nullable="false" MaxLength="255" />
+          <Property Type="DateTime" Name="OpenDate" Nullable="true" Precision="23" />
+          <Property Type="Int32" Name="TotalUnitsPlanned" Nullable="true" />
+          <Property Type="Decimal" Name="ClosingsMedianPrice" Nullable="true" Precision="11" Scale="0" />
+          <Property Type="Int16" Name="ClosingCount" Nullable="true" />
+          <Property Type="String" Name="ProductTypeLongDesc" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="WebAddress" Nullable="true" MaxLength="255" />
+        </ComplexType>
+        <ComplexType Name="CountyExtent">
+          <Property Type="String" Name="CountyName" Nullable="false" MaxLength="60" />
+          <Property Type="Double" Name="Latitude" Nullable="true" />
+          <Property Type="Double" Name="Longitude" Nullable="true" />
+          <Property Type="Double" Name="Radius" Nullable="true" />
+        </ComplexType>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="DataWarehouseStoreContainer" CdmEntityContainer="DataWarehouseEntities" >
+          <FunctionImportMapping FunctionImportName="GetTopProjects" FunctionName="DataWarehouse.Store.GetTopProjects">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="DataWarehouse.TopProject">
+                <ScalarProperty Name="MarketName" ColumnName="MarketName" />
+                <ScalarProperty Name="CountyName" ColumnName="CountyName" />
+                <ScalarProperty Name="Zipcode" ColumnName="Zipcode" />
+                <ScalarProperty Name="ProjectName" ColumnName="ProjectName" />
+                <ScalarProperty Name="OpenDate" ColumnName="OpenDate" />
+                <ScalarProperty Name="TotalUnitsPlanned" ColumnName="TotalUnitsPlanned" />
+                <ScalarProperty Name="ClosingsMedianPrice" ColumnName="ClosingsMedianPrice" />
+                <ScalarProperty Name="ClosingCount" ColumnName="ClosingCount" />
+                <ScalarProperty Name="ProductTypeLongDesc" ColumnName="ProductTypeLongDesc" />
+                <ScalarProperty Name="WebAddress" ColumnName="WebAddress" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="GetCountyExtents" FunctionName="DataWarehouse.Store.GetCountyExtents">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="DataWarehouse.CountyExtent">
+                <ScalarProperty Name="CountyName" ColumnName="CountyName" />
+                <ScalarProperty Name="Latitude" ColumnName="Latitude" />
+                <ScalarProperty Name="Longitude" ColumnName="Longitude" />
+                <ScalarProperty Name="Radius" ColumnName="Radius" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="True" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="True" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

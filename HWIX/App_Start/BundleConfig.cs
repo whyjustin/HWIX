@@ -7,6 +7,7 @@ namespace HWIX {
         public static string STYLE_BOOTSTRAP = "~/STYLE_BOOTSTRAP";
         public static string STYLE_JQUERY = "~/Content/themes/base/css";
         public static string STYLE_KENDOUI = "~/STYLE_KENDOUI";
+        public static string STYLE_JQDATERANGESLIDER = "~/STYLE_STYLE_JQDATERANGESLIDER";
 
         public static string SCRIPT_HWIX = "~/SCRIPT_HWIX";
         public static string SCRIPT_BOOTSTRAP = "~/SCRIPT_BOOTSTRAP";
@@ -17,6 +18,7 @@ namespace HWIX {
         public static string SCRIPT_KENDOUI = "~/SCRIPT_KENDOUI";
         public static string SCRIPT_KNOCKOUT = "~/SCRIPT_KNOCKOUT";
         public static string SCRIPT_MAPDOTNET = "~/SCRIPT_MAPDOTNET";
+        public static string SCRIPT_JQDATERANGESLIDER = "~/SCRIPT_JQDATERANGESLIDER";
 
         // For more information on Bundling, visit http://go.microsoft.com/fwlink/?LinkId=254725
         public static void RegisterBundles(BundleCollection bundles) {
@@ -66,6 +68,9 @@ namespace HWIX {
             bundles.Add(new ScriptBundle(SCRIPT_MAPDOTNET).Include(
                         "~/Scripts/isc.rim.js",
                         "~/Scripts/jquery.mousewheel.js"));
+
+            bundles.Add(new StyleBundle(STYLE_JQDATERANGESLIDER).Include("~/Content/jQDateRangeSlider/classic.css"));
+            bundles.Add(new ScriptBundle(SCRIPT_JQDATERANGESLIDER).Include("~/Scripts/jQDateRangeSlider-min.js"));
         }
     }
 }

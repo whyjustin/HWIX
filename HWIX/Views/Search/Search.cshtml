@@ -52,6 +52,7 @@
         </section>
         @if (Model.Extent != null) {
             <section id="mapping">
+                <div id="mapSlider"></div>
                 <div id="heatMap"></div>
             </section>
         }
@@ -119,6 +120,8 @@
         </div>
     </script>
     <script>
+        var closingFilterFunc;
+
         function load() {
             setTimeout(function() {
                 var measure = $('#measure button.active').data('value');
@@ -130,7 +133,7 @@
         }
 
         function bind(data) {
-            viewModel = ko.mapping.fromJS(data);
+            var viewModel = ko.mapping.fromJS(data);
             ko.applyBindings(viewModel);
             setTimeout(function() {
                 $('#datachart').kendoStockChart({
@@ -155,7 +158,7 @@
                             field: 'Values'
                         },
                         select: {
-                            from: subtractYear(getDateFromNETDate(data.EndDate), 1),
+                            from: addYear(getDateFromNETDate(data.EndDate), -1),
                             to: getDateFromNETDate(data.EndDate)
                         }
                     }
@@ -166,6 +169,7 @@
         function setUpMap(data) {
             var container = $('#heatMap');
             if (container) {
+                // Map
                 var maxZoom = 10;
                 var uL = isc.rim.sphericalMercator.projectFromLatLon(new isc.rim.point(data.Extent.Longitude - data.Extent.Radius, data.Extent.Latitude - data.Extent.Radius));
                 var lR = isc.rim.sphericalMercator.projectFromLatLon(new isc.rim.point(data.Extent.Longitude + data.Extent.Radius, data.Extent.Latitude + data.Extent.Radius));
@@ -186,18 +190,26 @@
                 var mdnEndpoint = '@Config.MDNEndPoint';
                 var mapID = 'HWIX';
                 var layerID = 'Closings';
-                var mdnDescriptor = new isc.rim.tile.descriptorMDNRestFeature(mapID, layerID);
-                mdnDescriptor.setBleedRatio(1.33);
-                mdnDescriptor.setClipToRenderBounds(false);
-                mdnDescriptor.setSimplifyEnabled(false);
+                var closingsDescriptor = new isc.rim.tile.descriptorMDNRestFeature(mapID, layerID);
+                closingsDescriptor.setBleedRatio(1.33);
+                closingsDescriptor.setClipToRenderBounds(false);
+                closingsDescriptor.setSimplifyEnabled(false);
+
                 var rendererDm = new isc.rim.tile.rendererDensityMap();
-                
+                closingFilterFunc = function(shape) {
+                    var closingDate = parseInt(shape.fieldValues[4]);
+                    var minDate = parseInt(formatDate($('#mapSlider').dateRangeSlider('min'), 'yyyyMMdd'));
+                    var maxDate = parseInt(formatDate($('#mapSlider').dateRangeSlider('max'), 'yyyyMMdd'));
+                    return closingDate > minDate && closingDate <= maxDate ? 1 : 0;
+                };
+                rendererDm.setRowAction(closingFilterFunc);
+
                 var mdnRequestor = new isc.rim.tile.requestorMDNRest(mdnEndpoint);
                 mdnRequestor.setTimeoutMs(30000);
 
                 var mdnTileLayer = new isc.rim.tile.layer("closingsLayer", false, 3);
                 mdnTileLayer.setRequestor(mdnRequestor);
-                mdnTileLayer.setDescriptor(mdnDescriptor);
+                mdnTileLayer.setDescriptor(closingsDescriptor);
                 mdnTileLayer.setRenderer(rendererDm);
                 mdnTileLayer.setMinZoomLevel(maxZoom);
                 mdnTileLayer.setTileBleedPix(0);
@@ -217,6 +229,14 @@
                     alert(errMsg);
                 });
 
+                // Date Slider
+                $('#mapSlider').dateRangeSlider({
+                    bounds: { min: new Date(2012, 1-1, 1), max: new Date() },
+                    defaultValues: { min: new Date(2012, 6-1, 1), max: new Date(2012, 12-1, 31) }
+                });
+                $('#mapSlider').bind("valuesChanged", function(e, slider) {
+                    rendererDm.notifyRecompute();
+                });
             }
         }
 

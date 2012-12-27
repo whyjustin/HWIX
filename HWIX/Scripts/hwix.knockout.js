@@ -1,9 +1,8 @@
 ﻿ko.extenders.datetime = function (target, format) {
-    var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     var result = ko.dependentObservable({
         read: function() {
             var date = getDateFromNETDate(target());
-            return format.replace(/MMMM/g, monthNames[date.getMonth()]).replace(/yyyy/g, date.getFullYear()).replace(/dd/g, date.getDate()).replace(/MM/g, date.getMonth());
+            return formatDate(date, format);
         },
         write: target
     });

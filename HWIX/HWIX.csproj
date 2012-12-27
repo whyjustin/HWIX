@@ -202,8 +202,12 @@
     <Content Include="Content\bootstrap-responsive.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\jQDateRangeSlider\classic.css" />
     <Content Include="Content\images\glyphicons-halflings-white.png" />
     <Content Include="Content\images\glyphicons-halflings.png" />
+    <Content Include="Content\jQDateRangeSlider\icons\label.png" />
+    <Content Include="Content\jQDateRangeSlider\icons\resultset_next.png" />
+    <Content Include="Content\jQDateRangeSlider\icons\resultset_previous.png" />
     <Content Include="Content\kendo.dataviz.css" />
     <Content Include="Content\kendo.dataviz.default.css" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
@@ -293,6 +297,7 @@
     <Content Include="Scripts\hwix.js" />
     <Content Include="Scripts\hwix.knockout.js" />
     <Content Include="Scripts\isc.rim.js" />
+    <Content Include="Scripts\jQDateRangeSlider-min.js" />
     <Content Include="Scripts\jquery-1.8.3.js" />
     <Content Include="Scripts\jquery-1.8.3.min.js" />
     <Content Include="Scripts\jquery-ui-1.9.2.js" />
@@ -312,7 +317,9 @@
     <Content Include="Scripts\knockout.mapping-latest.debug.js" />
     <Content Include="Scripts\knockout.mapping-latest.js" />
     <Content Include="Scripts\modernizr-2.5.3.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>

@@ -9,8 +9,10 @@
         <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
         <meta name="viewport" content="width=device-width" />
         @Styles.Render(BundleConfig.STYLE_SITE)
+        @Styles.Render(BundleConfig.STYLE_JQUERY)
         @Styles.Render(BundleConfig.STYLE_BOOTSTRAP)
         @Styles.Render(BundleConfig.STYLE_KENDOUI)
+        @Styles.Render(BundleConfig.STYLE_JQDATERANGESLIDER)
         @Scripts.Render(BundleConfig.SCRIPT_MODENIZR)
     </head>
     <body>
@@ -37,6 +39,7 @@
         @Scripts.Render(BundleConfig.SCRIPT_BOOTSTRAP)
         @Scripts.Render(BundleConfig.SCRIPT_KENDOUI)
         @Scripts.Render(BundleConfig.SCRIPT_MAPDOTNET)
+        @Scripts.Render(BundleConfig.SCRIPT_JQDATERANGESLIDER)
         @Scripts.Render(BundleConfig.SCRIPT_HWIX)
         @RenderSection("scripts", required: false)
         <script type="text/javascript">

@@ -11,6 +11,9 @@ using SSAS.SDK;
 
 namespace HWIX.Models.Search {
     public class Search {
+        public bool HasOtherSuggestions { get; set; }
+        public string OriginalQuery { get; set; }
+
         public string Name { get; set; }
         public string UniqueName { get; set; }
         public MemberType Type { get; set; }
@@ -59,14 +62,21 @@ namespace HWIX.Models.Search {
             get { return ValueByWeek.Where(x => x.Time <= EndDate && x.Time > EndDate.AddYears(-1)).Max(x => x.Values) ?? 0; }
         }
 
-        public Search(IAnalyticsMember member, MeasureType measure, DimensionType dimension) {
+        public Search(IAnalyticsMember member, MeasureType measure, DimensionType dimension, bool hasOtherSuggestions = false, string originalQuery = null) {
             Name = member.Name;
             UniqueName = member.UniqueName;
             Type = MemberMeta.GetMemberType(member);
             Format = AnalyticsCache.FormatFromType(measure);
 
-            var customSearch = new GoogleCache();
-            GoogleResults = customSearch.Search(member.Name).Select(x => new GoogleResult(x));
+            HasOtherSuggestions = hasOtherSuggestions;
+            OriginalQuery = originalQuery;
+
+            try {
+                var customSearch = new GoogleCache();
+                GoogleResults = customSearch.Search(member.Name).Select(x => new GoogleResult(x));
+            } catch(Exception ex) {
+                // Not paying for google search so this can throw a Not Authorized
+            }
 
             var analyticsCache = new AnalyticsCache();
             ValueByWeek = analyticsCache.GetMesaureByDimension(member, dimension, measure).Cast<IMeasureByTimeDimension>();

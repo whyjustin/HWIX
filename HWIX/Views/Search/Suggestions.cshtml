@@ -1,0 +1,21 @@
+﻿@using HWIX.Models.Meta
+@model System.Collections.Generic.Dictionary<System.Type,System.Collections.Generic.IEnumerable<SSAS.SDK.IAnalyticsMember>>
+
+<div class="row-fluid">
+    <div class="span3"></div>
+    <div class="span6">
+        @if(@Model.ContainsKey(typeof(CountyMember))) {
+            <h2>Counties</h2>
+            foreach(var county in @Model[typeof(CountyMember)].OrderBy(x => x.Name)) {
+                <p>@Html.ActionLink(county.Name, "Search", new { query = county.Name})</p>
+            }
+        }
+        @if(@Model.ContainsKey(typeof(BuilderMember))) {
+            <h2>Builders</h2>
+            foreach (var builder in @Model[typeof(BuilderMember)].OrderBy(x => x.Name)) {
+                <p>@Html.ActionLink(builder.Name, "Search", new { query = builder.Name})</p>
+            }
+        }
+    </div>
+    <div class="span3"></div>
+</div>

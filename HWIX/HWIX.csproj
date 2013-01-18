@@ -153,6 +153,7 @@
     <Compile Include="Cache\AnalyticsCache.cs" />
     <Compile Include="Cache\DataWarehouseCache.cs" />
     <Compile Include="Cache\GoogleCache.cs" />
+    <Compile Include="Constants\Mapping.cs" />
     <Compile Include="Models\Analytics\IMeasureByDimension.cs" />
     <Compile Include="Models\Analytics\IMeasureByTimeDimension.cs" />
     <Compile Include="Models\Analytics\MeasureByMonth.cs" />
@@ -337,6 +338,9 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Web.config" />
     <Content Include="Views\Search\Search.cshtml" />
+    <Content Include="Views\Search\Map.cshtml" />
+    <Content Include="Views\Shared\_LeanLayout.cshtml" />
+    <Content Include="Views\Search\Suggestions.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

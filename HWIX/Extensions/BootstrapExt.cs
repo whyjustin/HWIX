@@ -57,6 +57,9 @@ namespace HWIX.Extensions {
              case BootstrapIcon.Search:
                     clss = "icon-search";
                     break;
+                case BootstrapIcon.Left:
+                    clss = "icon-arrow-left";
+                    break;
                 default:
                     throw new NotImplementedException();
             }
@@ -96,7 +99,8 @@ namespace HWIX.Extensions {
     }
 
     public enum BootstrapIcon {
-        Search
+        Search,
+        Left
     }
 
     public enum BootstrapButton {

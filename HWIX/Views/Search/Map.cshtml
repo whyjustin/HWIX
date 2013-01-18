@@ -1,0 +1,187 @@
+﻿@using HWIX.Cache
+@using HWIX.Constants
+@using HWIX.Extensions
+@model HWIX.Models.Search.Search
+@{
+    Layout = "../Shared/_LeanLayout.cshtml";
+}
+
+<div id="row-fluid mapHeader">
+    <div class="span3">
+        @Html.ActionIcon("Search", "Search", new {query = @Model.Name}, BootstrapButton.Primary, BootstrapIcon.Left, true)
+    </div>
+    <div class="span7 center">
+        <h3 class="thin">@Model.Name</h3>
+    </div>
+    <div class="span3">
+        <div id="layer" class="btn-group rightButton" data-toggle="buttons-radio">
+            <button type="button" class="btn btn-primary active" data-value="@Enum.GetName(typeof(MapType), MapType.Closings)">Closings</button>
+            <button type="button" class="btn btn-primary" data-value="Selling">Selling</button>
+            <button type="button" class="btn btn-primary" data-value="@Enum.GetName(typeof(MapType), MapType.HeatMap)">Heat Map</button>
+        </div>
+    </div>
+</div>
+@*<div id="mapSlider"></div>*@
+<div id="heatMap"></div>
+
+@section scripts {
+    <script>
+        maxZoom = 13;
+        mdnEndpoint = '@Config.MDNEndPoint';
+        container = $('#heatMap');
+
+        function setupLayers() {
+            var mapID = 'HWIX';
+            var boundariesMapID = 'Boundaries';
+            var closingLayerID = 'Closings';
+            var sellingLayerID = 'Selling';
+            var tileMapID = 'Tiles';
+            var boundariesMapID = 'Boundaries';
+            var heatMapID = 'HeatMap';
+            
+            var mdnDescriptor = new isc.rim.tile.descriptorMDNRestMap(mapID);
+            mdnDescriptor.setBleedRatio(1.125); // we have pushpins that might overlap tile boundaries
+            mdnDescriptor.setImageType('png8');
+                    
+            // create requestor
+            var tileRequestor = new isc.rim.tile.requestorMDNRest(mdnEndpoint);
+
+            // create tile overlay layer
+            var tileLayer = new isc.rim.tile.layer(tileMapID, false, 3);
+            tileLayer.setRequestor(tileRequestor);
+            tileLayer.setDescriptor(mdnDescriptor);
+            tileLayer.setMinZoomLevel(maxZoom);
+
+            // turn off the presentation bleed for this layer as we have translucent fills [not solid fills]
+            // this is set to one pixel by default and should be left alone by opaque base layers
+            // this is not the same as the requestor bleed which retrieves content (like pushpins) beyond the tile bounds
+            tileLayer.setTileBleedPix(0);
+
+            // push the MapDotNet tile.layer onto the map
+            container.rimMap('pushTileLayer', tileLayer);
+            
+            var boundariesDescriptor = new isc.rim.tile.descriptorMDNRestMap(boundariesMapID);
+            boundariesDescriptor.setBleedRatio(1.125); // we have pushpins that might overlap tile boundaries
+            boundariesDescriptor.setImageType('png8');
+
+            // create requestor
+            var boundariesRequestor = new isc.rim.tile.requestorMDNRest(mdnEndpoint);
+
+            // create tile overlay layer
+            var boundariesLayer = new isc.rim.tile.layer(boundariesMapID, false, 3);
+            boundariesLayer.setRequestor(boundariesRequestor);
+            boundariesLayer.setDescriptor(boundariesDescriptor);
+            boundariesLayer.setMinZoomLevel(maxZoom);
+            boundariesLayer.setTileBleedPix(0);
+
+            // push the MapDotNet tile.layer onto the map
+            container.rimMap('pushTileLayer', boundariesLayer);
+
+            var closingsDescriptor = new isc.rim.tile.descriptorMDNRestFeature(mapID, closingLayerID);
+            closingsDescriptor.setBleedRatio(1.33);
+            closingsDescriptor.setClipToRenderBounds(false);
+            closingsDescriptor.setSimplifyEnabled(false);
+
+            var rendererDm = new isc.rim.tile.rendererDensityMap();
+            //closingFilterFunc = function(shape) {
+            //    var closingDate = parseInt(shape.fieldValues[4]);
+            //    var minDate = parseInt(formatDate($('#mapSlider').dateRangeSlider('min'), 'yyyyMMdd'));
+            //    var maxDate = parseInt(formatDate($('#mapSlider').dateRangeSlider('max'), 'yyyyMMdd'));
+            //    return closingDate > minDate && closingDate <= maxDate ? 1 : 0;
+            //};
+            //rendererDm.setRowAction(closingFilterFunc);
+
+            var mdnRequestor = new isc.rim.tile.requestorMDNRest(mdnEndpoint);
+            mdnRequestor.setTimeoutMs(30000);
+
+            var heatMapLayer = new isc.rim.tile.layer(heatMapID, false, 3);
+            heatMapLayer.setRequestor(mdnRequestor);
+            heatMapLayer.setDescriptor(closingsDescriptor);
+            heatMapLayer.setRenderer(rendererDm);
+            heatMapLayer.setMinZoomLevel(maxZoom);
+            heatMapLayer.setTileBleedPix(0);
+
+            container.rimMap('pushTileLayer', heatMapLayer);
+
+            var notifyRecomputeDensityMap = function() {
+                rendererDm.notifyRecompute();
+            };
+            container.rimMap('setExtentChangeCompleteAction', notifyRecomputeDensityMap);
+
+            heatMapLayer.setIsVisible(false);
+            tileLayer.setIsVisible(true);
+
+            mdnDescriptor.setLayerVisibility(closingLayerID, true);
+            mdnDescriptor.setLayerVisibility(sellingLayerID, false);
+            
+            $('#layer button').click(function(e) {
+                var layer = $(e.target).data('value');
+                switch (layer) {
+                case '@MapType.Closings':
+                    heatMapLayer.setIsVisible(false);
+                    tileLayer.setIsVisible(true);
+
+                    mdnDescriptor.setLayerVisibility(closingLayerID, true);
+                    mdnDescriptor.setLayerVisibility(sellingLayerID, false);
+                    break;
+                case 'Selling':
+                    heatMapLayer.setIsVisible(false);
+                    tileLayer.setIsVisible(true);
+
+                    mdnDescriptor.setLayerVisibility(closingLayerID, false);
+                    mdnDescriptor.setLayerVisibility(sellingLayerID, true);
+                    break;
+                case '@MapType.HeatMap':
+                    tileLayer.setIsVisible(false);
+                    heatMapLayer.setIsVisible(true);
+                    break;
+                }
+            });
+        }
+
+        function setUpMap(data) {
+            if (container) {
+                // Map
+                var uL = isc.rim.sphericalMercator.projectFromLatLon(new isc.rim.point(data.Extent.Longitude - data.Extent.Radius, data.Extent.Latitude - data.Extent.Radius));
+                var lR = isc.rim.sphericalMercator.projectFromLatLon(new isc.rim.point(data.Extent.Longitude + data.Extent.Radius, data.Extent.Latitude + data.Extent.Radius));
+                var extent = new isc.rim.envelope.createFromPoints(uL, lR);
+                var center = extent.getCenter();
+                container.rimMap({ mapCenterOnCreate: { x: center.getX(), y: center.getY() }, zoomLevelOnCreate: 10 });
+                var zoom = container.rimMap('getBestFitZoomLevelByExtents', extent);
+                zoom = zoom > maxZoom ? zoom : maxZoom;
+                container.rimMap('setZoomLevel', zoom);
+
+                var reqBing = new isc.rim.tile.requestorBing();
+                reqBing.setBingKey('@Config.BingMapsKey');
+                var tlBase = new isc.rim.tile.layer('baseLayer', true, 3);
+                tlBase.setDescriptor('r');
+                tlBase.setRequestor(reqBing);
+                container.rimMap('pushTileLayer', tlBase);
+                container.rimMap('setContentExtentsMarginInPixels', 32);
+
+                tlBase.setNotifyErrorAction(function(errMsg) {
+                    //alert(errMsg);
+                });
+
+                setupLayers();
+
+                // Date Slider
+                //$('#mapSlider').dateRangeSlider({
+                //    bounds: { min: new Date(2012, 1 - 1, 1), max: new Date() },
+                //    defaultValues: { min: new Date(2012, 6 - 1, 1), max: new Date(2012, 12 - 1, 31) }
+                //});
+                //$('#mapSlider').bind("valuesChanged", function(e, slider) {
+                //    rendererDm.notifyRecompute();
+                //});
+            }
+        }
+
+        $(document).ready(function() {
+            //! REMOVE BEFORE PRODUCTION AS MDN SERVER ON SAME DOMAIN
+            jQuery.support.cors = true;
+
+            var data = @Html.Raw(Json.Encode(Model));
+            setUpMap(data);
+        });
+    </script>
+}

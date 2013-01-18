@@ -16,18 +16,22 @@ using SSAS.SDK;
 namespace HWIX.Controllers {
     public class SearchController : Controller {
         public JsonResult QueryGeography(string query) {
-            var countyCache = new MetaCache<CountyMember>();
-            var countyResults = countyCache.GetMember(QueryType.StartsWith, query).Cast<IAnalyticsMember>();
-            var builderCache = new MetaCache<BuilderMember>();
-            var builderResults = builderCache.GetMember(QueryType.StartsWith, query).Cast<IAnalyticsMember>();
-            var results = countyResults.Union(builderResults).Select(x => x.Name).OrderBy(x => x);
+            var members = QueryMembers(query);
+            var results = members.SelectMany(x => x.Value).Select(x => x.Name).OrderBy(x => x);
             return Json(results, JsonRequestBehavior.AllowGet);
         }
-
+            
         [HttpGet]
         public ActionResult Search(string query) {
-            ViewBag.Query = query;
             var search = GetSearch(query);
+            ViewBag.Query = search.Name;
+            return View(search);
+        }
+        
+        [HttpGet]
+        public ActionResult Map(string query) {
+            var search = GetSearch(query);
+            ViewBag.Query = search.Name;
             return View(search);
         }
 
@@ -40,9 +44,28 @@ namespace HWIX.Controllers {
             return Json(search, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public ActionResult Suggestions(string query) {
+            var members = QueryMembers(query);
+            return View(members);
+        }
+
+        public Dictionary<Type, IEnumerable<IAnalyticsMember>> QueryMembers(string query) {
+            var countyCache = new MetaCache<CountyMember>();
+            var countyResults = countyCache.GetMember(QueryType.StartsWith, query).Cast<IAnalyticsMember>();
+            var builderCache = new MetaCache<BuilderMember>();
+            var builderResults = builderCache.GetMember(QueryType.StartsWith, query).Cast<IAnalyticsMember>();
+            return new Dictionary<Type, IEnumerable<IAnalyticsMember>> {
+                { typeof(CountyMember), countyResults},
+                { typeof(BuilderMember), builderResults}
+            };
+        }
+
         private Search GetSearch(string query) {
-            var queryMember = GetMemberByName(query);
-            return new Search(queryMember, MeasureType.Closing, DimensionType.Week);
+            var members = QueryMembers(query);
+            var memberName = members.OrderByDescending(x => x.Key == typeof (CountyMember)).SelectMany(x => x.Value).Select(x => x.UniqueName).First();
+            var queryMember = GetMemberUnique(memberName);
+            return new Search(queryMember, MeasureType.Closing, DimensionType.Week, members.SelectMany(x => x.Value).Count() > 1, query);
         }
 
         private IAnalyticsMember GetMemberByName(string query) {
